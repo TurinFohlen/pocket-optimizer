@@ -1,0 +1,108 @@
+import numpy as np
+from typing import List, Tuple
+from registry import registry
+
+
+@registry.register(
+    name='algorithm.powell',
+    type_='algorithm',
+    signature='optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+)
+class PowellAlgorithm:
+    required_source = 'source.interactive'
+    
+    def __init__(self, source):
+        self.source = source
+        self.max_iterations = 20
+        self.tolerance = 1e-6
+        self.n_samples = 5
+    
+    def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
+        n_dims = len(bounds)
+        lower = np.array([b[0] for b in bounds])
+        upper = np.array([b[1] for b in bounds])
+        
+        x0 = np.array([(b[0] + b[1]) / 2.0 for b in bounds])
+        
+        def reflect_to_bounds(y: np.ndarray) -> np.ndarray:
+            x = np.zeros_like(y)
+            for i in range(n_dims):
+                l, h = bounds[i][0], bounds[i][1]
+                span = h - l
+                
+                if span <= 0:
+                    x[i] = l
+                    continue
+                
+                t = ((y[i] - l) / span) % 2.0
+                
+                if t < 1.0:
+                    x[i] = l + t * span
+                else:
+                    x[i] = l + (2.0 - t) * span
+            
+            return x
+        
+        evaluated_points = {}
+        
+        def objective_for_powell(y: np.ndarray) -> float:
+            x = reflect_to_bounds(y)
+            
+            x_tuple = tuple(np.round(x, decimals=10))
+            
+            if x_tuple in evaluated_points:
+                return -evaluated_points[x_tuple]
+            
+            value = self.source.measure(x, n_samples=self.n_samples)
+            evaluated_points[x_tuple] = value
+            
+            return -value
+        
+        try:
+            from scipy.optimize import minimize
+            
+            result = minimize(
+                fun=objective_for_powell,
+                x0=x0,
+                method='Powell',
+                options={
+                    'maxiter': self.max_iterations,
+                    'xtol': self.tolerance,
+                    'ftol': self.tolerance * 10,
+                    'disp': False
+                }
+            )
+            
+            best_y = result.x
+            best_x = reflect_to_bounds(best_y)
+            
+            x_tuple = tuple(np.round(best_x, decimals=10))
+            if x_tuple in evaluated_points:
+                best_value = evaluated_points[x_tuple]
+            else:
+                best_value = self.source.measure(best_x, n_samples=self.n_samples)
+            
+            return best_x, best_value
+            
+        except ImportError:
+            best_point = x0.copy()
+            best_value = self.source.measure(best_point, n_samples=self.n_samples)
+            
+            for dim in range(n_dims):
+                test_point = best_point.copy()
+                step_size = (bounds[dim][1] - bounds[dim][0]) * 0.1
+                
+                for direction in [1, -1]:
+                    test_val = best_point[dim] + direction * step_size
+                    
+                    if bounds[dim][0] <= test_val <= bounds[dim][1]:
+                        test_point[dim] = test_val
+                        test_value = self.source.measure(test_point, n_samples=self.n_samples)
+                        
+                        if test_value > best_value:
+                            best_value = test_value
+                            best_point = test_point.copy()
+                        
+                        test_point[dim] = best_point[dim]
+            
+            return best_point, best_value

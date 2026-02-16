@@ -1,0 +1,245 @@
+version: '1.0'
+total_components: 24
+components:
+- name: source.test_cli
+  type: source
+  signature: 'measure(point: np.ndarray, n_samples: int) -> float'
+  dependencies: []
+  registration_order: 0
+  source_file: ''
+  class_name: TestCLISource
+- name: algorithm.test_ga
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.test_cli
+  registration_order: 1
+  source_file: ''
+  class_name: TestGeneticAlgorithm
+- name: ui.cli_menu
+  type: ui
+  signature: run()
+  dependencies: []
+  registration_order: 2
+  source_file: ''
+  class_name: ClassicCLI
+- name: source.interactive
+  type: source
+  signature: 'measure(point: np.ndarray, n_samples: int) -> float'
+  dependencies: []
+  registration_order: 3
+  source_file: ''
+  class_name: InteractiveSource
+- name: source.test_function
+  type: source
+  signature: 'measure(point: np.ndarray, n_samples: int) -> float'
+  dependencies: []
+  registration_order: 4
+  source_file: ''
+  class_name: TestFunctionSource
+- name: algorithm.genetic
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 5
+  source_file: ''
+  class_name: GeneticAlgorithm
+- name: algorithm.pso
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 6
+  source_file: ''
+  class_name: PSOAlgorithm
+- name: algorithm.powell
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 7
+  source_file: ''
+  class_name: PowellAlgorithm
+- name: algorithm.bayesian
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 8
+  source_file: ''
+  class_name: BayesianOptimization
+- name: algorithm.simulated_annealing
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 9
+  source_file: ''
+  class_name: SimulatedAnnealingAlgorithm
+- name: exporter.csv
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 10
+  source_file: ''
+  class_name: CSVExporter
+- name: exporter.json
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 11
+  source_file: ''
+  class_name: JSONExporter
+- name: exporter.excel
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 12
+  source_file: ''
+  class_name: ExcelExporter
+- name: exporter.plot
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 13
+  source_file: ''
+  class_name: PlotExporter
+- name: exporter.plot_parallel_advanced
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str, smooth: bool = True,
+    fill: bool = False) -> str'
+  dependencies: []
+  registration_order: 14
+  source_file: ''
+  class_name: AdvancedParallelCoordinatesExporter
+- name: exporter.excel_pandas
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 15
+  source_file: ''
+  class_name: PandasExcelExporter
+- name: service.executor
+  type: service
+  signature: executor_service()
+  dependencies: []
+  registration_order: 16
+  source_file: services/executor_service.py
+  class_name: ExecutorService
+- name: service.distance
+  type: service
+  signature: distance_service()
+  dependencies: []
+  registration_order: 17
+  source_file: services/distance_service.py
+  class_name: DistanceService
+- name: source.interactive_classic
+  type: source
+  signature: 'measure(point: np.ndarray, n_samples: int) -> float'
+  dependencies: []
+  registration_order: 18
+  source_file: ''
+  class_name: InteractiveClassicSource
+- name: exporter.convergence_plot
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 19
+  source_file: ''
+  class_name: ConvergencePlotExporter
+- name: service.translator.json
+  type: service
+  signature: 'json_to_python(json_input: Union[str, dict], **kwargs) -> Any'
+  dependencies: []
+  registration_order: 20
+  source_file: services/json_translator.py
+  class_name: JSONTranslatorService
+- name: service.translator.wl
+  type: service
+  signature: 'wl_to_python(expr: str) -> str'
+  dependencies: []
+  registration_order: 21
+  source_file: services/wl_translator.py
+  class_name: WolframTranslatorService
+- name: ui.legacy_menu
+  type: ui
+  signature: run()
+  dependencies: []
+  registration_order: 22
+  source_file: ''
+  class_name: LegacyOptimizationProgram
+- name: ui.web_demo
+  type: ui
+  signature: run()
+  dependencies: []
+  registration_order: 23
+  source_file: ''
+  class_name: WebUI
+adjacency_matrix:
+  nodes:
+  - source.test_cli
+  - algorithm.test_ga
+  - ui.cli_menu
+  - source.interactive
+  - source.test_function
+  - algorithm.genetic
+  - algorithm.pso
+  - algorithm.powell
+  - algorithm.bayesian
+  - algorithm.simulated_annealing
+  - exporter.csv
+  - exporter.json
+  - exporter.excel
+  - exporter.plot
+  - exporter.plot_parallel_advanced
+  - exporter.excel_pandas
+  - service.executor
+  - service.distance
+  - source.interactive_classic
+  - exporter.convergence_plot
+  - service.translator.json
+  - service.translator.wl
+  - ui.legacy_menu
+  - ui.web_demo
+  csr_format:
+    data:
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    indices:
+    - 0
+    - 3
+    - 3
+    - 3
+    - 3
+    - 3
+    row_ptrs:
+    - 0
+    - 0
+    - 1
+    - 1
+    - 1
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6
+    - 6

@@ -1,0 +1,75 @@
+import numpy as np
+from typing import List, Tuple, Dict, Any, Optional
+from dataclasses import dataclass
+from registry import registry
+
+
+@dataclass
+class OptimizationConfig:
+    param_bounds: List[Tuple[float, float]]
+    param_names: List[str]
+    num_samples: int = 5
+    max_evaluations: int = 30
+    noise_level: float = 10.0
+
+
+@dataclass
+class HistoryEntry:
+    point: np.ndarray
+    value: float
+    algorithm: str
+    timestamp: float
+
+
+class Orchestrator:
+    def __init__(self, config: OptimizationConfig, source_name: Optional[str] = None):
+        self.config = config
+        self.source_name = source_name
+        self.history: List[HistoryEntry] = []
+        self.source_instance = None
+        
+        if source_name:
+            source_class = registry.get_component(source_name)
+            if source_class:
+                self.source_instance = source_class()
+    
+    def set_source(self, source_name: str):
+        self.source_name = source_name
+        source_class = registry.get_component(source_name)
+        if source_class is None:
+            raise ValueError(f"Source '{source_name}' not found in registry")
+        self.source_instance = source_class()
+    
+    def run(self, algorithm_name: str) -> Tuple[np.ndarray, float]:
+        if self.source_instance is None:
+            raise ValueError("No source configured. Call set_source() first.")
+        
+        algorithm_class = registry.get_component(algorithm_name)
+        if algorithm_class is None:
+            raise ValueError(f"Algorithm '{algorithm_name}' not found in registry")
+        
+        spec = registry.get_spec(algorithm_name)
+        if spec and spec.dependencies:
+            missing = [dep for dep in spec.dependencies if dep not in registry.components]
+            if missing:
+                raise ValueError(f"Missing dependencies: {missing}")
+        
+        algorithm_instance = algorithm_class(source=self.source_instance)
+        
+        best_point, best_value = algorithm_instance.optimize(self.config.param_bounds)
+        
+        import time
+        self.history.append(HistoryEntry(
+            point=best_point,
+            value=best_value,
+            algorithm=algorithm_name,
+            timestamp=time.time()
+        ))
+        
+        return best_point, best_value
+    
+    def get_history(self) -> List[HistoryEntry]:
+        return self.history.copy()
+    
+    def clear_history(self):
+        self.history.clear()

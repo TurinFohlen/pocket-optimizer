@@ -1,0 +1,367 @@
+#!/usr/bin/env python3
+# uis/legacy_menu.py - 完全修复语法错误与缩进
+from registry import registry
+from orchestrator import Orchestrator, OptimizationConfig, HistoryEntry
+import numpy as np
+import time
+import os
+
+# 导入所需的服务（翻译器、距离等）
+def _get_translator_json():
+    cls = registry.get_component('service.translator.json')
+    return cls() if cls else None
+
+def _get_translator_wl():
+    cls = registry.get_component('service.translator.wl')
+    return cls() if cls else None
+
+@registry.register(
+    name='ui.legacy_menu',
+    type_='ui',
+    signature='run()'
+)
+class LegacyOptimizationProgram:
+    """
+    从旧系统移植的交互界面，完全保留原汁原味的用户体验，
+    但内部已适配新架构：使用 Orchestrator、翻译器服务、导出器组件。
+    """
+    def __init__(self):
+        self.optimizer = None
+        self.config = None
+        self.selected_algorithm = None
+
+    def run(self):
+        """主入口 - 完全沿用原 run() 的逻辑"""
+        print("\n" + "=" * 80)
+        print(" 增强通用优化系统 · 经典界面（已适配新引擎）")
+        print("=" * 80)
+
+        self.configure()
+
+        # 创建 Orchestrator（替代旧 optimizer）
+        source_name = 'source.test_function'
+        orch = Orchestrator(self.config, source_name=source_name)
+
+        # 算法选择（已在 configure 中设置 self.selected_algorithm）
+        algo_name = self._map_algorithm_name(self.selected_algorithm)
+        if not algo_name:
+            print("❌ 未选择有效算法")
+            return
+
+        # 导入历史数据（复用旧方法，内部调用翻译器服务）
+        self.import_historical_data(orch)
+
+        # 执行优化
+        print(f"\n🚀 正在运行 {algo_name} ...")
+        best_point, best_value = orch.run(algo_name)
+
+        # 显示结果
+        print(f"\n✅ 最优解: {best_point}")
+        print(f"✅ 最优值: {best_value:.6f}")
+
+        # 导出结果
+        self._export_results(orch)
+
+    def configure(self):
+        """完全复用原 configure()，仅将 self.optimizer 相关去除"""
+        print("\n优化程序配置")
+        print("=" * 50)
+        n_dims = int(input("请输入参数数量 (默认2): ") or 2)
+        param_names = []
+        param_bounds = []
+        for i in range(n_dims):
+            print(f"\n参数 {i+1}:")
+            name = input(f"  参数名称 (默认: 参数{i+1}): ") or f"参数{i+1}"
+            param_names.append(name)
+            min_val = float(input(f"  最小值 (默认: 0): ") or 0)
+            max_val = float(input(f"  最大值 (默认: 100): ") or 100)
+            param_bounds.append((min_val, max_val))
+
+        num_samples = int(input(f"\n每点采样次数 (默认5): ") or 5)
+        precision = int(input(f"精度截断小数位数 (默认2): ") or 2)
+        max_evaluations = int(input(f"最大评估次数 (默认30): ") or 30)
+
+        # 算法选择菜单（原样）
+        print(f"\n使用高级算法?")
+        print("A. 全流程优化 (自动切换多种算法)")
+        print("B. 拉丁方采样 (Latin Hypercube)")
+        print("C. 遗传进化法 (Genetic Algorithm)")
+        print("D. 共轭方向法 (Powell)")
+        print("E. 粒子群算法 (Particle Swarm)")
+        print("F. 模拟退火法 (Simulated Annealing)")
+        print("G. 贝叶斯优化 (Bayesian Optimization)")
+        algo_choice = input("\n请选择 (A/B/C/D/E/F/G, 默认A): ").strip().upper() or 'A'
+
+        algo_map = {
+            'A': None,
+            'B': 'latin_hypercube',
+            'C': 'genetic',
+            'D': 'powell',
+            'E': 'particle_swarm',
+            'F': 'simulated_annealing',
+            'G': 'bayesian_ei'
+        }
+        self.selected_algorithm = algo_map.get(algo_choice, None)
+
+        # 构建配置对象
+        self.config = OptimizationConfig(
+            param_bounds=param_bounds,
+            param_names=param_names,
+            num_samples=num_samples,
+            max_evaluations=max_evaluations
+        )
+        self._display_config()
+
+    def _display_config(self):
+        """原样复制"""
+        if self.config is None:
+            print(" 配置未设置")
+            return
+        print("\n当前配置:")
+        print(f"   参数维度: {len(self.config.param_names)}")
+        for name, bounds in zip(self.config.param_names, self.config.param_bounds):
+            print(f"     {name}: [{bounds[0]}, {bounds[1]}]")
+        print(f"   每点采样次数: {self.config.num_samples}")
+        print(f"   最大评估次数: {self.config.max_evaluations}")
+
+    def _map_algorithm_name(self, algo_code):
+        """将旧算法代号映射为新架构的注册名"""
+        if algo_code is None:
+            return 'algorithm.genetic'
+        mapping = {
+            'genetic': 'algorithm.genetic',
+            'powell': 'algorithm.powell',
+            'particle_swarm': 'algorithm.pso',
+            'simulated_annealing': 'algorithm.simulated_annealing',
+            'bayesian_ei': 'algorithm.bayesian',
+            'latin_hypercube': 'algorithm.latin_hypercube'
+        }
+        return mapping.get(algo_code, 'algorithm.genetic')
+
+    def import_historical_data(self, orch):
+        """复用旧交互逻辑"""
+        print("\n历史数据导入")
+        print("=" * 60)
+        print("\n选择导入方式:")
+        print("  A.  Wolfram Language (.wl) 文件导入")
+        print("  B.  JSON文件批量导入 (推荐，适合10+条数据)")
+        print("  C. ⌨  手动逐条输入 (适合少量数据，1-5条)")
+        print("  D. ⏭  跳过导入 (done)")
+        choice = input("\n请选择 (A/B/C/D, 默认D): ").strip().upper()
+        if choice == '' or choice == 'D':
+            print("⏭  跳过历史数据导入")
+            return
+        elif choice == 'A':
+            self._import_from_wl(orch)
+        elif choice == 'B':
+            self._import_from_json(orch)
+        elif choice == 'C':
+            self._import_manually(orch)
+        else:
+            print(" 无效选择，跳过导入")
+
+    def _import_from_json(self, orch):
+        """调用 service.translator.json 服务"""
+        svc_cls = registry.get_component('service.translator.json')
+        if not svc_cls:
+            print("❌ JSON翻译器服务未注册")
+            return
+        translator = svc_cls()
+
+        default_filename = "optimization_history.json"
+        filename = input(f"\n JSON文件名或路径 (默认: {default_filename}): ").strip() or default_filename
+        found_path = self._find_file(filename, ['.json'])
+        if found_path is None:
+            print(f"\n 无法找到文件 '{filename}'")
+            self._show_search_paths(filename)
+            return
+
+        try:
+            data = translator.from_file(found_path)
+            print(f"✅ 成功解析 JSON 文件，找到 {len(data) if isinstance(data, list) else 1} 条记录")
+            if isinstance(data, list):
+                for record in data:
+                    self._import_single_record(record, orch)
+            else:
+                self._import_single_record(data, orch)
+        except Exception as e:
+            print(f"❌ JSON 导入失败: {e}")
+
+    def _import_from_wl(self, orch):
+        """调用 service.translator.wl 服务"""
+        svc_cls = registry.get_component('service.translator.wl')
+        if not svc_cls:
+            print("❌ Wolfram翻译器服务未注册")
+            return
+        translator = svc_cls()
+
+        default_filename = "optimization_history.wl"
+        filename = input(f"\n WL文件名或路径 (默认: {default_filename}): ").strip() or default_filename
+        found_path = self._find_file(filename, ['.wl', '.m', '.nb'])
+        if found_path is None:
+            print(f"\n 无法找到文件 '{filename}'")
+            self._show_search_paths(filename)
+            return
+
+        with open(found_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        lines = content.split('\n')
+        imported = 0
+        for line in lines:
+            line = line.strip()
+            if not line or ('->' not in line and '{' not in line):
+                continue
+            py_code = translator.wl_to_python(line)
+            if py_code:
+                try:
+                    value = eval(py_code)
+                    record = {
+                        'point': [0] * len(self.config.param_names),
+                        'value': value,
+                        'algorithm_used': 'wl_import'
+                    }
+                    self._import_single_record(record, orch)
+                    imported += 1
+                except:
+                    pass
+        print(f"✅ 已导入 {imported} 条 WL 记录")
+
+    def _import_manually(self, orch):
+        """手动逐条输入"""
+        print("\n⌨  手动逐条输入")
+        print("-" * 60)
+        print(f"\n 需要 {len(self.config.param_bounds)} 个参数值 + 1个测量值")
+        imported_count = 0
+        while True:
+            prompt = f"记录 {imported_count + 1} (done=完成): "
+            line = input(prompt).strip()
+            if line.lower() in ['done', ''] and imported_count > 0:
+                break
+            try:
+                point, value = self._parse_manual_input(line)
+                entry = HistoryEntry(
+                    point=point,
+                    value=value,
+                    algorithm='manual',
+                    timestamp=time.time()
+                )
+                orch.history.append(entry)
+                imported_count += 1
+                print(f"   记录 {imported_count} 已添加")
+            except Exception as e:
+                print(f"   输入格式错误: {e}")
+        print(f"\n 手动导入完成: 共 {imported_count} 条记录")
+
+    def _parse_manual_input(self, line):
+        """解析手动输入，返回 (point, value)"""
+        parts = [p.strip() for p in line.split(',')]
+        values = []
+        for p in parts:
+            try:
+                values.append(float(p))
+            except ValueError:
+                raise ValueError(f"'{p}' 不是有效数字")
+        n_params = len(self.config.param_bounds)
+        if len(values) < n_params + 1:
+            raise ValueError(f"需要至少 {n_params + 1} 个值")
+        point = np.array(values[:n_params])
+        for i, (val, bounds) in enumerate(zip(point, self.config.param_bounds)):
+            if val < bounds[0] or val > bounds[1]:
+                param_name = self.config.param_names[i]
+                raise ValueError(f"参数 '{param_name}' 值 {val} 超出范围 [{bounds[0]}, {bounds[1]}]")
+        value = values[n_params]
+        return point, value
+
+    def _import_single_record(self, record, orch):
+        """将一条记录添加到 Orchestrator 的历史中"""
+        point = np.array(record.get('point', []))
+        if len(point) != len(self.config.param_bounds):
+            return
+        value = record.get('value', 0)
+        entry = HistoryEntry(
+            point=point,
+            value=value,
+            algorithm=record.get('algorithm_used', 'historical'),
+            timestamp=record.get('timestamp', time.time())
+        )
+        orch.history.append(entry)
+
+    def _get_search_directories(self):
+        """文件搜索目录"""
+        search_dirs = [
+            os.getcwd(),
+            os.path.expanduser("~"),
+            os.path.expanduser("~/Downloads"),
+            os.path.expanduser("~/Documents"),
+            os.path.expanduser("~/Desktop"),
+        ]
+        android_paths = [
+            "/storage/emulated/0",
+            "/storage/emulated/0/Download",
+            "/storage/emulated/0/Documents",
+            "/sdcard",
+            "/sdcard/Download",
+            "/sdcard/Documents",
+        ]
+        search_dirs.extend(android_paths)
+        if 'EXTERNAL_STORAGE' in os.environ:
+            search_dirs.append(os.environ['EXTERNAL_STORAGE'])
+        unique_dirs = []
+        seen = set()
+        for d in search_dirs:
+            if d not in seen and os.path.isdir(d):
+                unique_dirs.append(d)
+                seen.add(d)
+        return unique_dirs
+
+    def _find_file(self, filename, extensions=None):
+        """智能文件查找"""
+        if os.path.isabs(filename) and os.path.isfile(filename):
+            return filename
+        if os.path.isfile(filename):
+            return os.path.abspath(filename)
+        search_dirs = self._get_search_directories()
+        for directory in search_dirs:
+            full_path = os.path.join(directory, filename)
+            if os.path.isfile(full_path):
+                return full_path
+            if extensions:
+                for ext in extensions:
+                    if filename.endswith(ext):
+                        continue
+                    full_path_with_ext = os.path.join(directory, filename + ext)
+                    if os.path.isfile(full_path_with_ext):
+                        return full_path_with_ext
+        return None
+
+    def _show_search_paths(self, filename):
+        """显示搜索路径"""
+        search_dirs = self._get_search_directories()
+        print("\n已尝试以下位置:")
+        for i, directory in enumerate(search_dirs[:10], 1):
+            full_path = os.path.join(directory, filename)
+            print(f"  {i}. {full_path}")
+        if len(search_dirs) > 10:
+            print(f"  ... 以及其他 {len(search_dirs) - 10} 个位置")
+
+    def _export_results(self, orch):
+        """调用导出器组件"""
+        exporters = registry.list_components('exporter')
+        if not exporters:
+            print("\n⚠️ 没有可用的导出器")
+            return
+        print("\n📁 导出结果：")
+        for i, e in enumerate(exporters):
+            print(f"  {i}. {e.name}")
+        exp_idx = int(input("选择导出格式 [不导出]: ") or "-1")
+        if 0 <= exp_idx < len(exporters):
+            exp_name = exporters[exp_idx].name
+            exp_cls = registry.get_component(exp_name)
+            exporter = exp_cls()
+            algo_short = self.selected_algorithm or 'optimization'
+            filepath = f"result_{algo_short}.{exp_name.split('.')[-1]}"
+            if 'plot' in exp_name and not filepath.endswith(('.png', '.jpg', '.pdf')):
+                filepath = filepath.rsplit('.', 1)[0] + '.png'
+            exporter.export(orch.get_history(), filepath)
+            print(f"✅ 已保存至 {filepath}")
