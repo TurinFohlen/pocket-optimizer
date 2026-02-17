@@ -1,5 +1,5 @@
 version: '1.0'
-total_components: 24
+total_components: 26
 components:
 - name: source.test_cli
   type: source
@@ -176,6 +176,20 @@ components:
   registration_order: 23
   source_file: ''
   class_name: WebUI
+- name: exporter.covergence_ln_plot
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 24
+  source_file: ''
+  class_name: ConvergenceLnPlotExporter
+- name: source.test_rugged_rotated
+  type: source
+  signature: 'measure(point: np.ndarray, n_samples: int) -> float'
+  dependencies: []
+  registration_order: 25
+  source_file: ''
+  class_name: TestRuggedRotatedSource
 adjacency_matrix:
   nodes:
   - source.test_cli
@@ -202,6 +216,8 @@ adjacency_matrix:
   - service.translator.wl
   - ui.legacy_menu
   - ui.web_demo
+  - exporter.covergence_ln_plot
+  - source.test_rugged_rotated
   csr_format:
     data:
     - 1
@@ -228,6 +244,8 @@ adjacency_matrix:
     - 3
     - 4
     - 5
+    - 6
+    - 6
     - 6
     - 6
     - 6

@@ -1,0 +1,86 @@
+def export(self, history: List[HistoryEntry], filepath: str) -> str:
+    if not history:
+        print("Warning: No history data to plot")
+        return ""
+
+    epsilon = 1e-12
+
+    raw_values = np.array([h.value for h in history])
+
+    # ---- 统一用 ln|value| ----
+    abs_values = np.clip(np.abs(raw_values), epsilon, None)
+    values = np.log(abs_values)
+
+    # 防止 nan / inf 污染
+    values = np.nan_to_num(values, nan=0.0, neginf=-50, posinf=50)
+
+    iterations = np.arange(1, len(values) + 1)
+
+    # ---- 最大化问题：best 应该是最大 raw_value ----
+    best_raw = np.maximum.accumulate(raw_values)
+    best_abs = np.clip(np.abs(best_raw), epsilon, None)
+    best_so_far = np.log(best_abs)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+
+    ax1.plot(iterations, values, 'o-', alpha=0.6,
+             markersize=3, linewidth=1,
+             label='ln|Measured Value|')
+
+    ax1.plot(iterations, best_so_far, 'r-',
+             linewidth=2,
+             label='Best ln|Value| So Far')
+
+    ax1.set_xlabel('Evaluation #', fontsize=12)
+    ax1.set_ylabel('ln|Objective Value|', fontsize=12)
+    ax1.set_title(
+        f'Convergence History (Log-Absolute, {len(history)} evaluations)',
+        fontsize=14, fontweight='bold'
+    )
+    ax1.legend(fontsize=10)
+    ax1.grid(True, alpha=0.3)
+
+    # ---- 平滑部分（不再会被 -inf 污染）----
+    window_size = max(10, len(values) // 50)
+
+    if len(values) >= window_size:
+        kernel = np.ones(window_size) / window_size
+        moving_avg = np.convolve(values, kernel, mode='valid')
+
+        ax2.plot(range(window_size, len(values)+1),
+                 moving_avg, 'g-',
+                 linewidth=2,
+                 label=f'Moving Average (window={window_size})')
+
+        ax2.plot(iterations, values,
+                 'b.', alpha=0.2,
+                 markersize=2,
+                 label='Raw ln|Values|')
+
+        ax2.set_title('Smoothed Trend (Log-Absolute)',
+                      fontsize=14, fontweight='bold')
+    else:
+        ax2.plot(iterations, values, 'bo-', markersize=4)
+        ax2.set_title('All Evaluations (Log-Absolute)',
+                      fontsize=14, fontweight='bold')
+
+    ax2.set_xlabel('Evaluation #', fontsize=12)
+    ax2.set_ylabel('ln|Objective Value|', fontsize=12)
+    ax2.legend(fontsize=10)
+    ax2.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    base, ext = os.path.splitext(filepath)
+    filepath = f"{base}_{timestamp}{ext}"
+
+    plt.savefig(filepath, dpi=150, bbox_inches='tight')
+    plt.close()
+
+    print(f"✓ Log-absolute convergence plot saved: {filepath}")
+    print(f"  Total evaluations: {len(history)}")
+    print(f"  Best ln|value|: {np.max(best_so_far):.6f}")
+    print(f"  Final ln|value|: {values[-1]:.6f}")
+
+    return filepath
