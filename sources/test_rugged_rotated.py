@@ -22,7 +22,7 @@ class TestRuggedRotatedSource:
     def __init__(self):
         self.measurement_count = 0
         self.noise_level = 0.01
-
+        self.max_evals = 1000
     def measure(self, point: np.ndarray, n_samples: int = 5) -> float:
         self.measurement_count += 1
 

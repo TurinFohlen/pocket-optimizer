@@ -11,8 +11,15 @@ from pathlib import Path
 
 # 要扫描的顶层包名列表
 #PACKAGES = ['sources', 'algorithms', 'uis', 'exporters', 'processors']
-PACKAGES = ['sources', 'algorithms', 'uis', 'exporters', 'processors', 'analyzers']
-
+PACKAGES = [
+    'sources',
+    'algorithms',
+    'uis',
+    'exporters',
+    'processors',
+    'analyzers',
+    'services',   # ← 加这个
+]
 def import_module_from_file(py_file: Path, package_name: str):
     """动态导入单个 .py 文件作为模块"""
     module_name = f"{package_name}.{py_file.stem}"

@@ -1,16 +1,15 @@
 from __future__ import annotations
 import numpy as np
-
-
+from registry import registry
+import numpy as np
 # ================================
 # SERVICE COMPONENT TEMPLATE
 # ================================
 
 #1️⃣ 注册信息（需配合 registry 使用时取消注释）
- @registry.register(
-     name='service.data.tensor_array_translator',
+@registry.register(name='service.data.tensor_array_translator',
     type_='service',
-     signature='translate(data: np.ndarray) -> np.ndarray'
+     signature='translate(data: np.ndarray) -> np.ndarray')
  
 
 class TensorArrayTranslatorService:

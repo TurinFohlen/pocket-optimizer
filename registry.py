@@ -5,6 +5,8 @@ import yaml
 import os
 import re
 from pathlib import Path
+from collections import defaultdict
+from contextlib import contextmanager
 
 
 @dataclass
@@ -25,7 +27,12 @@ class Registry:
         self.registration_counter = 0
         self.component_instances: Dict[str, Any] = {}
         self._load_existing()
-    
+        self._service_cache: Dict[str, Any] = {}
+        # 【新增】运行时依赖追踪系统
+        self.runtime_dependencies: Dict[str, set] = defaultdict(set)
+        self._component_stack: List[str] = []
+        self._track_depth = 0
+        self._max_track_depth = 20  # 可配置，20层通常足够防栈溢出
     def _load_existing(self):
         if os.path.exists(self.config_path):
             try:
@@ -191,13 +198,23 @@ class Registry:
     
     def get_spec(self, name: str) -> Optional[ComponentSpec]:
         return self.components.get(name)
-    
+
+    def get_service(self, name: str) -> Any:
+        if name not in self.component_instances:
+            raise KeyError(f"组件未注册: {name}")
+
+        if name not in self._service_cache:
+            cls = self.component_instances[name]
+            self._service_cache[name] = cls()
+
+        return self._service_cache[name]
+
     def list_components(self, type_filter: Optional[str] = None) -> List[ComponentSpec]:
         comps = list(self.components.values())
         if type_filter:
             comps = [c for c in comps if c.type == type_filter]
-        return sorted(comps, key=lambda x: x.registration_order)
-    
+        return sorted(comps, key=lambda x: x.registration_order)    
+
     def validate_dependencies(self) -> Tuple[bool, List[str]]:
         errors = []
         for spec in self.components.values():
@@ -208,6 +225,221 @@ class Registry:
     
     def get_adjacency_matrix(self) -> Dict[str, Any]:
         return self._build_adjacency_matrix()
+
+    # ================================================
+    # 运行时依赖追踪核心方法
+    # ================================================
+
+    def _push_component(self, name: str):
+        """压栈当前执行组件"""
+        if name in self.component_instances:
+            self._component_stack.append(name)
+
+    def _pop_component(self):
+        """出栈"""
+        if self._component_stack:
+            self._component_stack.pop()
+
+    def _get_current_component(self) -> Optional[str]:
+        """获取当前执行组件"""
+        return self._component_stack[-1] if self._component_stack else None
+
+    def _record_runtime_dependency(self, callee: str):
+        """自动记录运行时调用：当前组件 → callee"""
+        caller = self._get_current_component()
+        if caller and caller != callee and callee in self.components:
+            self.runtime_dependencies[caller].add(callee)
+
+    @contextmanager
+    def component_context(self, name: str):
+        """推荐上下文（支持嵌套）"""
+        self._push_component(name)
+        try:
+            yield
+        finally:
+            self._pop_component()
+
+    def _get_merged_deps(self, name: str) -> List[str]:
+        """合并静态 + 运行时依赖（不修改原有 spec）"""
+        if name not in self.components:
+            return []
+        static = set(self.components[name].dependencies)
+        runtime = self.runtime_dependencies.get(name, set())
+        return sorted(static | runtime)
+
+    def _build_enhanced_adjacency(self) -> Dict[str, Any]:
+        """内部增强版构建（调用原有方法后叠加运行时边）"""
+        base = _original_build_adjacency_matrix(self)
+        if not self.components:
+            return base
+
+        sorted_components = sorted(self.components.values(), key=lambda x: x.registration_order)
+        nodes = [c.name for c in sorted_components]
+        node_to_idx = {n: i for i, n in enumerate(nodes)}
+
+        data = []
+        indices = []
+        row_ptrs = [0]
+
+        for comp in sorted_components:
+            row_start = len(data)
+            # 原有静态依赖保持不变
+            for dep in comp.dependencies:
+                if dep in node_to_idx:
+                    data.append(1)
+                    indices.append(node_to_idx[dep])
+            # 叠加运行时依赖边（仅新增边，不重复）
+            for dep in self._get_merged_deps(comp.name):
+                if dep not in comp.dependencies and dep in node_to_idx:
+                    data.append(1)
+                    indices.append(node_to_idx[dep])
+            row_ptrs.append(len(data))
+
+        return {
+            'nodes': nodes,
+            'csr_format': {
+                'data': data,
+                'indices': indices,
+                'row_ptrs': row_ptrs
+            }
+        }
+
+    # ================================================
+    # 完全自动运行时上下文注入 + 源码扫描补盲
+    # ================================================
+
+    def _is_dunder(self, name: str) -> bool:
+        """判断是否双下划线方法"""
+        return name.startswith('__') and name.endswith('__')
+
+    def _wrap_callable(self, callable_obj, component_name: str):
+        """包装任意可调用对象，自动进入组件上下文栈"""
+        if not callable(callable_obj):
+            return callable_obj
+        def wrapped(*args, **kwargs):
+            with self.component_context(component_name):
+                return callable_obj(*args, **kwargs)
+        return wrapped
+
+    def _auto_wrap_registered_component(self, name: str):
+        """自动包装已注册组件的所有 public 可调用成员（class 或 function）"""
+        if name not in self.component_instances:
+            return
+        obj = self.component_instances[name]
+        if inspect.isclass(obj):
+            # 包装类中所有非dunder可调用方法
+            for attr_name in dir(obj):
+                if self._is_dunder(attr_name):
+                    continue
+                attr = getattr(obj, attr_name)
+                if callable(attr):
+                    wrapped = self._wrap_callable(attr, name)
+                    setattr(obj, attr_name, wrapped)
+        elif callable(obj):
+            # 包装顶层函数
+            wrapped = self._wrap_callable(obj, name)
+            self.component_instances[name] = wrapped
+
+    def _scan_source_for_runtime_deps(self, name: str):
+        """依赖分析阶段源码扫描补盲：仅扫描自身 source_file，匹配其他已注册组件名"""
+        if name not in self.components:
+            return
+        source_file = self.components[name].source_file
+        if not source_file or not os.path.exists(source_file):
+            return
+        try:
+            with open(source_file, 'r', encoding='utf-8') as f:
+                source_code = f.read()
+
+            # 【新增】简单去掉 Python 单行注释（# 开头到行尾）和多行字符串注释
+            # 保留代码准确性，减少误匹配
+            lines = []
+            for line in source_code.splitlines():
+                stripped = line.lstrip()
+                if stripped.startswith('#'):
+                    continue  # 跳过整行注释
+                # 移除行内注释（# 后面部分），但保留字符串中的 #
+                if '#' in line and not line.strip().startswith('"') and not line.strip().startswith("'"):
+                    line = line.split('#', 1)[0].rstrip()
+                lines.append(line)
+            cleaned_code = '\n'.join(lines)
+
+            # 【新增可选】进一步移除常见多行字符串（docstring）中的内容
+            # 这里用简单正则移除 """...""" 和 '''...'''（非贪婪）
+            cleaned_code = re.sub(r'""".*?"""', '', cleaned_code, flags=re.DOTALL)
+            cleaned_code = re.sub(r"'''.*?'''", '', cleaned_code, flags=re.DOTALL)
+
+            for other_name in list(self.components.keys()):
+                if other_name == name:
+                    continue
+                # 使用原有匹配逻辑，但现在用清洗后的代码
+                if re.search(rf'\b{re.escape(other_name)}\b', cleaned_code):
+                    self.runtime_dependencies[name].add(other_name)
+        except:
+            pass
+
+# ================================================
+# 无侵入方法包装（实现全自动运行时追踪）
+# ================================================
+
+_original_get_service = Registry.get_service
+_original_build_adjacency_matrix = Registry._build_adjacency_matrix
+_original_flush = Registry._flush
+_original_register = Registry.register
+
+
+def _tracked_get_service(self, name: str) -> Any:
+    if self._track_depth >= self._max_track_depth:
+        return _original_get_service(self, name)  # 超过深度，只执行不追踪
+    self._track_depth += 1
+    try:
+        self._record_runtime_dependency(name)
+        return _original_get_service(self, name)
+    finally:
+        self._track_depth -= 1
+
+
+def _tracked_build_adjacency_matrix(self) -> Dict[str, Any]:
+    if self._track_depth >= self._max_track_depth:
+        return _original_build_adjacency_matrix(self)  # 原始版本（非 patch）
+    self._track_depth += 1
+    try:
+        return self._build_enhanced_adjacency()
+    finally:
+        self._track_depth -= 1
+
+
+def _tracked_flush(self):
+    if self._track_depth >= self._max_track_depth:
+        _original_flush(self)
+        return
+    self._track_depth += 1
+    try:
+        _original_flush(self)
+    finally:
+        self._track_depth -= 1
+
+
+def _tracked_register(self, name: str, type_: str, signature: str):
+    if self._track_depth >= self._max_track_depth:
+        return _original_register(self, name, type_, signature)
+    self._track_depth += 1
+    try:
+        original_decorator = _original_register(self, name, type_, signature)
+        def enhanced_decorator(func_or_class):
+            result = original_decorator(func_or_class)
+            self._auto_wrap_registered_component(name)
+            self._scan_source_for_runtime_deps(name)
+            return result
+        return enhanced_decorator
+    finally:
+        self._track_depth -= 1
+
+# 应用所有 monkey-patch
+Registry.get_service = _tracked_get_service
+Registry._build_adjacency_matrix = _tracked_build_adjacency_matrix
+Registry._flush = _tracked_flush
+Registry.register = _tracked_register
 
 
 registry = Registry()
