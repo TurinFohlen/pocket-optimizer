@@ -12,7 +12,7 @@ class MockSource:
         self.call_count = 0
         self.query_points = []
     
-    def measure(self, point, n_samples=5):
+    def measure(self, point):
         self.call_count += 1
         self.query_points.append(point.copy())
         return self.func(point)

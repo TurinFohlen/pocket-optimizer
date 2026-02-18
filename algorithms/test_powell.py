@@ -11,7 +11,7 @@ class MockSource:
         self.func = func
         self.call_count = 0
     
-    def measure(self, point, n_samples=5):
+    def measure(self, point):
         self.call_count += 1
         return self.func(point)
 

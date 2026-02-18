@@ -30,7 +30,7 @@ class TestGeneticAlgorithm:
         
         for gen in range(self.generations):
             fitness = np.array([
-                self.source.measure(ind, n_samples=3)
+                self.source.measure(ind)
                 for ind in population
             ])
             

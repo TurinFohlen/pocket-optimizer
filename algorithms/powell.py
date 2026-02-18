@@ -32,7 +32,6 @@ class PowellAlgorithm:
         self.source = source
         self.max_iterations = 20
         self.tolerance = 1e-6
-        self.n_samples = 5
 
         # ========== 看门狗参数（可调）==========
         self.boundary_threshold = 0.1          # 距离边界 10% 内视为“边界区域”
@@ -116,7 +115,7 @@ class PowellAlgorithm:
                 if x_tuple in evaluated_points:
                     return -evaluated_points[x_tuple]
 
-                value = self.source.measure(x, n_samples=self.n_samples)
+                value = self.source.measure(x)
                 evaluated_points[x_tuple] = value
 
                 # 记录历史点（用于后续重复检测）
@@ -141,14 +140,14 @@ class PowellAlgorithm:
             best_x = reflect_to_bounds(best_y)
             x_tuple = tuple(np.round(best_x, decimals=10))
             best_value = evaluated_points.get(x_tuple,
-                                              self.source.measure(best_x, n_samples=self.n_samples))
+                                              self.source.measure(best_x))
             return best_x, best_value
 
         except ImportError:
             # ========== 无 SciPy 回退模式 ==========
             print("SciPy 未安装，使用回退 Powell 搜索（带并发优化）")
             best_point = x0.copy()
-            best_value = self.source.measure(best_point, n_samples=self.n_samples)
+            best_value = self.source.measure(best_point)
 
             # 初始化距离服务（若无则跳过）
             if dist_svc:
@@ -166,7 +165,7 @@ class PowellAlgorithm:
                         dists, _ = dist_svc.kneighbors(test_point.reshape(1, -1), n_neighbors=1, metric='chebyshev')
                         if len(dists) > 0 and dists[0] < self.duplicate_threshold * np.max(span):
                             return None  # 跳过
-                    val = self.source.measure(test_point, n_samples=self.n_samples)
+                    val = self.source.measure(test_point)
                     return (test_point, val)
                 return None
 

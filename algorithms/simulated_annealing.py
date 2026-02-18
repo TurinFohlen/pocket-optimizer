@@ -17,7 +17,6 @@ class SimulatedAnnealingAlgorithm:
         self.initial_temperature = 100.0
         self.cooling_rate = 0.95
         self.step_size_initial = 0.5
-        self.n_samples = 5
     
     def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
         n_dims = len(bounds)
@@ -26,7 +25,7 @@ class SimulatedAnnealingAlgorithm:
         span = upper - lower
         
         current_point = np.random.uniform(lower, upper, size=n_dims)
-        current_value = self.source.measure(current_point, n_samples=self.n_samples)
+        current_value = self.source.measure(current_point)
         
         best_point = current_point.copy()
         best_value = current_value
@@ -38,7 +37,7 @@ class SimulatedAnnealingAlgorithm:
             neighbor = current_point + np.random.normal(0, step_size, n_dims) * span
             neighbor = np.clip(neighbor, lower, upper)
             
-            neighbor_value = self.source.measure(neighbor, n_samples=self.n_samples)
+            neighbor_value = self.source.measure(neighbor)
             
             delta = neighbor_value - current_value
             

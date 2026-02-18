@@ -18,7 +18,6 @@ class PSOAlgorithm:
         self.w = 0.7298
         self.c1 = 1.49618
         self.c2 = 1.49618
-        self.n_samples = 5
     
     def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
         n_dims = len(bounds)
@@ -35,7 +34,7 @@ class PSOAlgorithm:
         global_best_value = -np.inf
         
         for i in range(self.num_particles):
-            value = self.source.measure(positions[i], n_samples=self.n_samples)
+            value = self.source.measure(positions[i])
             personal_best_values[i] = value
             
             if value > global_best_value:
@@ -55,7 +54,7 @@ class PSOAlgorithm:
                 positions[i] = positions[i] + velocities[i]
                 positions[i] = np.clip(positions[i], lower, upper)
                 
-                value = self.source.measure(positions[i], n_samples=self.n_samples)
+                value = self.source.measure(positions[i])
                 
                 if value > personal_best_values[i]:
                     personal_best_values[i] = value

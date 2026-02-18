@@ -5,7 +5,7 @@ from registry import registry
 @registry.register(
     name='source.test_rugged_rotated',
     type_='source',
-    signature='measure(point: np.ndarray, n_samples: int) -> float'
+    signature='measure(point: np.ndarray) -> float'
 )
 class TestRuggedRotatedSource:
     """
@@ -19,17 +19,19 @@ class TestRuggedRotatedSource:
     - 轻微噪声
     """
 
-    def __init__(self):
+    def __init__(self, n_samples: int = 5):
         self.measurement_count = 0
         self.noise_level = 0.01
         self.max_evals = 1000
-    def measure(self, point: np.ndarray, n_samples: int = 5) -> float:
+        self.n_samples = n_samples
+
+    def measure(self, point: np.ndarray) -> float:
         self.measurement_count += 1
 
         true_value = self._rugged_function(point)
 
         measurements = []
-        for _ in range(n_samples):
+        for _ in range(self.n_samples):
             noise = np.random.normal(0, self.noise_level)
             measurements.append(true_value + noise)
 

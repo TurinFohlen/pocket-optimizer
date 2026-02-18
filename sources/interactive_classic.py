@@ -24,25 +24,26 @@ except ImportError:
 @registry.register(
     name='source.interactive_classic',
     type_='source',
-    signature='measure(point: np.ndarray, n_samples: int) -> float'
+    signature='measure(point: np.ndarray) -> float'
 )
 class InteractiveClassicSource:
     """精简版·原味交互测量源 - 依赖库函数，代码量减少70%"""
     
-    def __init__(self):
-        self.measurement_history = []  # 用于LOF增强
-    
-    def measure(self, point: np.ndarray, n_samples: int = 5) -> float:
+    def __init__(self, n_samples: int = 5):
+        self.measurement_history = []  # 用于LOF增强（业务需要）
+        self.n_samples = n_samples
+
+    def measure(self, point: np.ndarray) -> float:
         # ---------- 1. 友好的参数显示 ----------
         print(f"\n📍 测量点: {self._format_point(point)}")
-        print(f"   采样次数: {n_samples}")
+        print(f"   采样次数: {self.n_samples}")
 
         # ---------- 2. 逐次输入测量值 ----------
         raw_values = []
-        for i in range(n_samples):
+        for i in range(self.n_samples):
             while True:
                 try:
-                    val = float(input(f"   第 {i+1}/{n_samples} 次测量值: "))
+                    val = float(input(f"   第 {i+1}/{self.n_samples} 次测量值: "))
                     raw_values.append(val)
                     break
                 except ValueError:

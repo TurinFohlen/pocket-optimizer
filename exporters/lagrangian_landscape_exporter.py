@@ -224,11 +224,17 @@ def _render_one(combo: Dict,
     ax.imshow(rgb, origin='lower', extent=extent,
               aspect='auto', interpolation='bilinear')
 
-    levels = np.linspace(F_grid.min(), F_grid.max(), 18)
-    cs = ax.contour(grid_x, grid_y, F_grid,
+    _f_range = F_grid.max() - F_grid.min()
+    if _f_range < 1e-10:
+        # F 近似常数（如测试函数退化），跳过等高线
+        cs = None
+    else:
+        levels = np.linspace(F_grid.min(), F_grid.max(), 18)
+        cs = ax.contour(grid_x, grid_y, F_grid,
                     levels=levels, colors='white',
                     linewidths=0.65, alpha=0.50)
-    ax.clabel(cs, inline=True, fontsize=6, fmt='%.2f', colors='white')
+    if cs is not None:
+        ax.clabel(cs, inline=True, fontsize=6, fmt='%.2f', colors='white')
 
     ax.scatter(pos2d[:, 0], pos2d[:, 1],
                c='white', s=6, alpha=0.30, linewidths=0, zorder=3)
@@ -317,18 +323,8 @@ class LagrangianLandscapeExporter:
         ----
         List[str]：生成的文件路径列表，按重要性升序（最后一个最重要）
         """
-        # ─────────────────────────────
-        # 数据适配服务层
-        # ─────────────────────────────
-        adapter = registry.get_service("service.data.history_adapter")
-        
-        if adapter is None:
-            raise RuntimeError("service.data.history_adapter 未注册")
-
-        structured = adapter.convert(data)
-
-        positions = np.asarray(structured["positions"], dtype=float)
-        values    = np.asarray(structured["values"],    dtype=float)        
+        positions = np.asarray(data["positions"], dtype=float)
+        values    = np.asarray(data["values"],    dtype=float)
 
         if positions.ndim != 2 or positions.shape[1] < 2:
             raise ValueError("positions 必须是 (N, D)，D >= 2")

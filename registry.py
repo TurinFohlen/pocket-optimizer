@@ -313,9 +313,11 @@ class Registry:
         return name.startswith('__') and name.endswith('__')
 
     def _wrap_callable(self, callable_obj, component_name: str):
-        """包装任意可调用对象，自动进入组件上下文栈"""
+        """包装任意可调用对象，自动进入组件上下文栈，保留原始签名"""
         if not callable(callable_obj):
             return callable_obj
+        import functools
+        @functools.wraps(callable_obj)
         def wrapped(*args, **kwargs):
             with self.component_context(component_name):
                 return callable_obj(*args, **kwargs)

@@ -5,20 +5,21 @@ from registry import registry
 @registry.register(
     name='source.test_function',
     type_='source',
-    signature='measure(point: np.ndarray, n_samples: int) -> float'
+    signature='measure(point: np.ndarray) -> float'
 )
 class TestFunctionSource:
-    def __init__(self):
+    def __init__(self, n_samples: int = 5):
         self.measurement_count = 0
         self.noise_level = 0.01
-    
-    def measure(self, point: np.ndarray, n_samples: int = 5) -> float:
+        self.n_samples = n_samples
+
+    def measure(self, point: np.ndarray) -> float:
         self.measurement_count += 1
         
         true_value = self._complex_test_function(point)
         
         measurements = []
-        for _ in range(n_samples):
+        for _ in range(self.n_samples):
             noise = np.random.normal(0, self.noise_level)
             measurements.append(true_value + noise)
         

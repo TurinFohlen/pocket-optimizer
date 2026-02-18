@@ -34,7 +34,7 @@ class GeneticAlgorithm:
             fitness = np.zeros(self.population_size)
             
             for i, individual in enumerate(population):
-                value = self.source.measure(individual, n_samples=5)
+                value = self.source.measure(individual)
                 fitness[i] = value
                 
                 if value > best_value:

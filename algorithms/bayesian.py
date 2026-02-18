@@ -33,7 +33,6 @@ class BayesianOptimization:
         self.n_initial = 5
         self.n_iterations = 25
         self.xi = 0.01
-        self.n_samples = 5
         self.n_restarts = 10
         self.candidate_ratio = 100
         self.duplicate_threshold_initial = 0.618
@@ -54,7 +53,7 @@ class BayesianOptimization:
         y = []
         for _ in range(self.n_initial):
             x = np.random.uniform(lower, upper, size=n_dims)
-            val = self.source.measure(x, n_samples=self.n_samples)
+            val = self.source.measure(x)
             X.append(x)
             y.append(val)
             if self.dist_svc:
@@ -103,7 +102,7 @@ class BayesianOptimization:
                     scores = self._expected_improvement_batch(mu_cand, sigma_cand, f_best, self.xi)
                     x_next = X_cand[np.argmax(scores)]
 
-            y_next = self.source.measure(x_next, n_samples=self.n_samples)
+            y_next = self.source.measure(x_next)
 
             X = np.vstack([X, x_next])
             y = np.append(y, y_next)

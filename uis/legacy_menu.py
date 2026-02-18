@@ -347,6 +347,7 @@ class LegacyOptimizationProgram:
 
     def _export_results(self, orch):
         """调用导出器组件"""
+        print(type(orch.get_history()), len(orch.get_history()))
         exporters = registry.list_components('exporter')
         if not exporters:
             print("\n⚠️ 没有可用的导出器")
