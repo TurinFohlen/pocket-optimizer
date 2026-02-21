@@ -1,0 +1,363 @@
+version: '1.0'
+total_components: 32
+components:
+- name: source.test_cli
+  type: source
+  signature: 'measure(point: np.ndarray) -> float'
+  dependencies: []
+  registration_order: 0
+  source_file: sources/test_cli.py
+  class_name: TestCLISource
+- name: algorithm.test_ga
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.test_cli
+  registration_order: 1
+  source_file: algorithms/test_ga.py
+  class_name: TestGeneticAlgorithm
+- name: source.interactive
+  type: source
+  signature: 'measure(point: np.ndarray) -> float'
+  dependencies: []
+  registration_order: 2
+  source_file: sources/interactive.py
+  class_name: InteractiveSource
+- name: source.test_function
+  type: source
+  signature: 'measure(point: np.ndarray) -> float'
+  dependencies: []
+  registration_order: 3
+  source_file: sources/test_function.py
+  class_name: TestFunctionSource
+- name: source.interactive_classic
+  type: source
+  signature: 'measure(point: np.ndarray) -> float'
+  dependencies: []
+  registration_order: 4
+  source_file: sources/interactive_classic.py
+  class_name: InteractiveClassicSource
+- name: source.test_rugged_rotated
+  type: source
+  signature: 'measure(point: np.ndarray) -> float'
+  dependencies: []
+  registration_order: 5
+  source_file: sources/test_rugged_rotated.py
+  class_name: TestRuggedRotatedSource
+- name: algorithm.genetic
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 6
+  source_file: algorithms/genetic.py
+  class_name: GeneticAlgorithm
+- name: algorithm.pso
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 7
+  source_file: algorithms/pso.py
+  class_name: PSOAlgorithm
+- name: algorithm.powell
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 8
+  source_file: algorithms/powell.py
+  class_name: PowellAlgorithm
+- name: algorithm.bayesian
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 9
+  source_file: algorithms/bayesian.py
+  class_name: BayesianOptimization
+- name: algorithm.simulated_annealing
+  type: algorithm
+  signature: 'optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]'
+  dependencies:
+  - source.interactive
+  registration_order: 10
+  source_file: algorithms/simulated_annealing.py
+  class_name: SimulatedAnnealingAlgorithm
+- name: ui.cli_menu
+  type: ui
+  signature: run()
+  dependencies: []
+  registration_order: 11
+  source_file: uis/cli_menu.py
+  class_name: ClassicCLI
+- name: ui.web_demo
+  type: ui
+  signature: run()
+  dependencies:
+  - algorithm.genetic
+  - source.test_function
+  registration_order: 12
+  source_file: uis/web_demo.py
+  class_name: WebUI
+- name: ui.legacy_menu
+  type: ui
+  signature: run()
+  dependencies:
+  - algorithm.bayesian
+  - algorithm.genetic
+  - algorithm.powell
+  - algorithm.pso
+  - algorithm.simulated_annealing
+  - service.translator.json
+  - service.translator.wl
+  - source.test_function
+  registration_order: 13
+  source_file: uis/legacy_menu.py
+  class_name: LegacyOptimizationProgram
+- name: exporter.csv
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 14
+  source_file: exporters/csv_exporter.py
+  class_name: CSVExporter
+- name: exporter.json
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 15
+  source_file: exporters/json_exporter.py
+  class_name: JSONExporter
+- name: exporter.excel
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 16
+  source_file: exporters/excel_exporter.py
+  class_name: ExcelExporter
+- name: exporter.plot
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 17
+  source_file: exporters/plot_exporter.py
+  class_name: PlotExporter
+- name: exporter.plot_parallel_advanced
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str, smooth: bool = True,
+    fill: bool = False) -> str'
+  dependencies: []
+  registration_order: 18
+  source_file: exporters/plot_parallel_advanced.py
+  class_name: AdvancedParallelCoordinatesExporter
+- name: exporter.convergence_plot
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 19
+  source_file: exporters/convergence_plot.py
+  class_name: ConvergencePlotExporter
+- name: exporter.covergence_ln_plot
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 20
+  source_file: exporters/covergence_ln_plot.py
+  class_name: ConvergenceLnPlotExporter
+- name: exporter.lagrangian_landscape
+  type: exporter
+  signature: 'export(data: dict, filepath: str, sigma: float, epsilon: float, K: int,
+    grid_n: int) -> list'
+  dependencies: []
+  registration_order: 21
+  source_file: exporters/lagrangian_landscape_exporter.py
+  class_name: LagrangianLandscapeExporter
+- name: exporter.excel_pandas
+  type: exporter
+  signature: 'export(history: List[HistoryEntry], filepath: str) -> str'
+  dependencies: []
+  registration_order: 22
+  source_file: analyzers/pandas_summary.py
+  class_name: PandasExcelExporter
+- name: processor.distance
+  type: processor
+  signature: 'distance(a: np.ndarray, b: np.ndarray) -> float'
+  dependencies: []
+  registration_order: 23
+  source_file: services/distance.py
+  class_name: DistanceService
+- name: service.executor
+  type: service
+  signature: executor_service()
+  dependencies: []
+  registration_order: 24
+  source_file: services/executor_service.py
+  class_name: ExecutorService
+- name: service.distance
+  type: service
+  signature: distance_service()
+  dependencies: []
+  registration_order: 25
+  source_file: services/distance_service.py
+  class_name: DistanceService
+- name: service.translator.wl
+  type: service
+  signature: 'wl_to_python(expr: str) -> str'
+  dependencies: []
+  registration_order: 26
+  source_file: services/wl_translator.py
+  class_name: WolframTranslatorService
+- name: service.translator.json
+  type: service
+  signature: 'json_to_python(json_input: Union[str, dict], **kwargs) -> Any'
+  dependencies: []
+  registration_order: 27
+  source_file: services/json_translator.py
+  class_name: JSONTranslatorService
+- name: service.data.tensor_array_translator
+  type: service
+  signature: 'translate(data: np.ndarray) -> np.ndarray'
+  dependencies: []
+  registration_order: 28
+  source_file: services/tensor_array_translator.py
+  class_name: TensorArrayTranslatorService
+- name: service.data.history_adapter
+  type: service
+  signature: 'convert(data: list) -> dict'
+  dependencies: []
+  registration_order: 29
+  source_file: ''
+  class_name: HistoryAdapterService
+- name: exporter.lagrangian_landscape_v2
+  type: exporter
+  signature: 'export(data: dict, filepath: str, sigma: float, epsilon: float, K: int,
+    grid_n: int) -> list'
+  dependencies: []
+  registration_order: 30
+  source_file: exporters/lagrangian_landscape_exporter_v2.py
+  class_name: LagrangianLandscapeExporter
+- name: loader
+  type: loader
+  signature: () → List[str]
+  dependencies: []
+  registration_order: 31
+  source_file: loader.py
+  class_name: ''
+adjacency_matrix:
+  nodes:
+  - source.test_cli
+  - algorithm.test_ga
+  - source.interactive
+  - source.test_function
+  - source.interactive_classic
+  - source.test_rugged_rotated
+  - algorithm.genetic
+  - algorithm.pso
+  - algorithm.powell
+  - algorithm.bayesian
+  - algorithm.simulated_annealing
+  - ui.cli_menu
+  - ui.web_demo
+  - ui.legacy_menu
+  - exporter.csv
+  - exporter.json
+  - exporter.excel
+  - exporter.plot
+  - exporter.plot_parallel_advanced
+  - exporter.convergence_plot
+  - exporter.covergence_ln_plot
+  - exporter.lagrangian_landscape
+  - exporter.excel_pandas
+  - processor.distance
+  - service.executor
+  - service.distance
+  - service.translator.wl
+  - service.translator.json
+  - service.data.tensor_array_translator
+  - service.data.history_adapter
+  - exporter.lagrangian_landscape_v2
+  - loader
+  csr_format:
+    data:
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    indices:
+    - 0
+    - 2
+    - 2
+    - 2
+    - 25
+    - 24
+    - 2
+    - 25
+    - 24
+    - 2
+    - 31
+    - 6
+    - 3
+    - 9
+    - 6
+    - 8
+    - 7
+    - 10
+    - 27
+    - 26
+    - 3
+    - 31
+    - 31
+    row_ptrs:
+    - 0
+    - 0
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 2
+    - 3
+    - 6
+    - 9
+    - 10
+    - 11
+    - 13
+    - 21
+    - 22
+    - 22
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23
+    - 23

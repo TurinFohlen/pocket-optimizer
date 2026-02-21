@@ -61,8 +61,7 @@ class ClassicCLI:
             param_names.append(f"x{i+1}")
 
         # 采样次数
-        n_samples     = int(input("每点采样次数 [5]: ")   or "5")
-        max_evals     = int(input("总评估点数   [30]: ") or "30")
+        n_samples = int(input("每点采样次数 [5]: ") or "5")
 
         # 优化方向
         print("优化方向：")
@@ -76,7 +75,6 @@ class ClassicCLI:
             param_bounds=bounds,
             param_names=param_names,
             num_samples=n_samples,
-            max_evaluations=max_evals,
             maximize=maximize,
         )
 
@@ -138,7 +136,7 @@ class ClassicCLI:
         print("导出完成")
 
         # 历史摘要
-        print(f"\n历史记录: {len(history)} 次评估  [{dir_label}  每点采样x{n_samples}  上限{max_evals}]") 
+        print(f"\n历史记录: {len(history)} 次评估  [{dir_label}  采样x{n_samples}]")
         if history:
             best_h = max(history, key=lambda h: h.value) if maximize \
                      else min(history, key=lambda h: h.value)

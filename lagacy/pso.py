@@ -18,12 +18,6 @@ class PSOAlgorithm:
         self.w = 0.7298
         self.c1 = 1.49618
         self.c2 = 1.49618
-
-    def set_budget(self, max_evaluations: int):
-        """按总评估预算自动调整粒子数和迭代数"""
-        self.num_particles  = max(5, min(20, max_evaluations // 6))
-        self.max_iterations = max(3, (max_evaluations - self.num_particles) // self.num_particles)
-
     
     def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
         n_dims = len(bounds)

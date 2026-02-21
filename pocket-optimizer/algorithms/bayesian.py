@@ -34,12 +34,6 @@ class BayesianOptimization:
         self.n_iterations = 25
         self.xi = 0.01
         self.n_restarts = 10
-
-    def set_budget(self, max_evaluations: int):
-        """初始点占20%，剩余用于贝叶斯迭代"""
-        self.n_initial    = max(3, max_evaluations // 5)
-        self.n_iterations = max(5, max_evaluations - self.n_initial)
-
         self.candidate_ratio = 100
         self.duplicate_threshold_initial = 0.618
         self.duplicate_decay = 0.1

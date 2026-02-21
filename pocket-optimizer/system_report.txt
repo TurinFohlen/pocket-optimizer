@@ -1,0 +1,174 @@
+======================================================================
+COMPONENT REGISTRY VERIFICATION
+======================================================================
+
+Total registered components: 16
+----------------------------------------------------------------------
+
+Component: source.test_cli
+  Type: source
+  Order: 0
+  Signature: measure(point: np.ndarray, n_samples: int) -> float
+  Dependencies: None
+  Source: sources/test_cli.py
+  Class: TestCLISource
+
+Component: algorithm.test_ga
+  Type: algorithm
+  Order: 1
+  Signature: optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]
+  Dependencies: ['source.test_cli']
+  Source: algorithms/test_ga.py
+  Class: TestGeneticAlgorithm
+
+Component: ui.cli_menu
+  Type: ui
+  Order: 2
+  Signature: run()
+  Dependencies: None
+  Source: uis/cli_menu.py
+  Class: ClassicCLI
+
+Component: source.interactive
+  Type: source
+  Order: 3
+  Signature: measure(point: np.ndarray, n_samples: int) -> float
+  Dependencies: None
+  Source: sources/interactive.py
+  Class: InteractiveSource
+
+Component: source.test_function
+  Type: source
+  Order: 4
+  Signature: measure(point: np.ndarray, n_samples: int) -> float
+  Dependencies: None
+  Source: sources/test_function.py
+  Class: TestFunctionSource
+
+Component: algorithm.genetic
+  Type: algorithm
+  Order: 5
+  Signature: optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]
+  Dependencies: ['source.interactive']
+  Source: algorithms/genetic.py
+  Class: GeneticAlgorithm
+
+Component: algorithm.pso
+  Type: algorithm
+  Order: 6
+  Signature: optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]
+  Dependencies: ['source.interactive']
+  Source: algorithms/pso.py
+  Class: PSOAlgorithm
+
+Component: algorithm.powell
+  Type: algorithm
+  Order: 7
+  Signature: optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]
+  Dependencies: ['source.interactive']
+  Source: algorithms/powell.py
+  Class: PowellAlgorithm
+
+Component: algorithm.bayesian
+  Type: algorithm
+  Order: 8
+  Signature: optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]
+  Dependencies: ['source.interactive']
+  Source: algorithms/bayesian.py
+  Class: BayesianOptimization
+
+Component: algorithm.simulated_annealing
+  Type: algorithm
+  Order: 9
+  Signature: optimize(bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]
+  Dependencies: ['source.interactive']
+  Source: algorithms/simulated_annealing.py
+  Class: SimulatedAnnealingAlgorithm
+
+Component: exporter.csv
+  Type: exporter
+  Order: 10
+  Signature: export(history: List[HistoryEntry], filepath: str) -> str
+  Dependencies: None
+  Source: 
+  Class: CSVExporter
+
+Component: exporter.json
+  Type: exporter
+  Order: 11
+  Signature: export(history: List[HistoryEntry], filepath: str) -> str
+  Dependencies: None
+  Source: 
+  Class: JSONExporter
+
+Component: exporter.excel
+  Type: exporter
+  Order: 12
+  Signature: export(history: List[HistoryEntry], filepath: str) -> str
+  Dependencies: None
+  Source: 
+  Class: ExcelExporter
+
+Component: exporter.plot
+  Type: exporter
+  Order: 13
+  Signature: export(history: List[HistoryEntry], filepath: str) -> str
+  Dependencies: None
+  Source: 
+  Class: PlotExporter
+
+Component: exporter.plot_parallel_advanced
+  Type: exporter
+  Order: 14
+  Signature: export(history: List[HistoryEntry], filepath: str, smooth: bool = True, fill: bool = False) -> str
+  Dependencies: None
+  Source: 
+  Class: AdvancedParallelCoordinatesExporter
+
+Component: exporter.excel_pandas
+  Type: exporter
+  Order: 15
+  Signature: export(history: List[HistoryEntry], filepath: str) -> str
+  Dependencies: None
+  Source: 
+  Class: PandasExcelExporter
+
+
+======================================================================
+ADJACENCY MATRIX
+======================================================================
+
+Nodes (16):
+  [0] source.test_cli
+  [1] algorithm.test_ga
+  [2] ui.cli_menu
+  [3] source.interactive
+  [4] source.test_function
+  [5] algorithm.genetic
+  [6] algorithm.pso
+  [7] algorithm.powell
+  [8] algorithm.bayesian
+  [9] algorithm.simulated_annealing
+  [10] exporter.csv
+  [11] exporter.json
+  [12] exporter.excel
+  [13] exporter.plot
+  [14] exporter.plot_parallel_advanced
+  [15] exporter.excel_pandas
+
+CSR Format:
+  Data:     [1, 1, 1, 1, 1, 1]
+  Indices:  [0, 3, 3, 3, 3, 3]
+  Row Ptrs: [0, 0, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6]
+
+
+======================================================================
+DEPENDENCY VALIDATION
+======================================================================
+
+✓ All dependencies are satisfied!
+✓ Dependency auto-detection successful!
+  algorithm.test_ga → source.test_cli
+
+
+======================================================================

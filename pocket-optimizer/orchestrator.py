@@ -34,10 +34,6 @@ class SourceWrapper:
         self.orchestrator    = orchestrator
 
     def measure(self, point: np.ndarray) -> float:
-        # 软上限：超出预算时返回极差值，算法自然不会选它
-        budget = getattr(self, "_budget", None)
-        if budget and self.orchestrator._evaluation_count >= budget:
-            return -1e18 if self.orchestrator.config.maximize else 1e18
         raw = self.source_instance.measure(point)   # 原始值
 
         if self.orchestrator._current_algorithm:
@@ -102,13 +98,8 @@ class Orchestrator:
         self._current_algorithm = algorithm_name
         self._evaluation_count  = 0
 
-        wrapped_source     = SourceWrapper(self.source_instance, self)
+        wrapped_source   = SourceWrapper(self.source_instance, self)
         algorithm_instance = algorithm_class(source=wrapped_source)
-        # 透传总评估预算（算法支持时生效）
-        if hasattr(algorithm_instance, "set_budget"):
-            algorithm_instance.set_budget(self.config.max_evaluations)
-        # 软上限：超出预算后 measure 直接返回 -inf，算法自然停止探索
-        wrapped_source._budget = self.config.max_evaluations
 
         best_point, best_algo_value = algorithm_instance.optimize(
             self.config.param_bounds

@@ -17,10 +17,6 @@ class SimulatedAnnealingAlgorithm:
         self.initial_temperature = 100.0
         self.cooling_rate = 0.95
         self.step_size_initial = 0.5
-
-    def set_budget(self, max_evaluations: int):
-        self.max_iterations = max(10, max_evaluations)
-
     
     def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
         n_dims = len(bounds)

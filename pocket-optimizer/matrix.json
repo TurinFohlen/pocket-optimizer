@@ -1,0 +1,57 @@
+{
+  "nodes": [
+    "source.test_cli",
+    "algorithm.test_ga",
+    "ui.cli_menu",
+    "source.interactive",
+    "source.test_function",
+    "algorithm.genetic",
+    "algorithm.pso",
+    "algorithm.powell",
+    "algorithm.bayesian",
+    "algorithm.simulated_annealing",
+    "exporter.csv",
+    "exporter.json",
+    "exporter.excel",
+    "exporter.plot",
+    "exporter.plot_parallel_advanced",
+    "exporter.excel_pandas"
+  ],
+  "csr_format": {
+    "data": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "indices": [
+      0,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "row_ptrs": [
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ]
+  }
+}

@@ -17,12 +17,6 @@ class GeneticAlgorithm:
         self.generations = 15
         self.mutation_rate = 0.1
         self.crossover_rate = 0.8
-
-    def set_budget(self, max_evaluations: int):
-        """种群大小和代数按预算自动分配"""
-        self.population_size = max(6, min(30, max_evaluations // 8))
-        self.generations     = max(3, max_evaluations // self.population_size)
-
     
     def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
         n_dims = len(bounds)

@@ -37,12 +37,6 @@ class PowellAlgorithm:
         self.boundary_threshold = 0.1          # 距离边界 10% 内视为“边界区域”
         self.compression_factor = 0.5          # 反射幅度压缩系数
         self.duplicate_threshold = 0.01        # 切比雪夫距离 < 1% 范围视为重复点
-
-    def set_budget(self, max_evaluations: int):
-        # Powell 由 scipy 控制收敛，max_iterations 是内部轮数而非评估次数
-        # 预算作为参考上限，实际评估数由收敛条件决定
-        self.max_iterations = max(5, max_evaluations)
-
         self.far_enough_threshold = 0.3        # 回退模式中步长 > 30% 切比雪夫距离才尝试
 
     def optimize(self, bounds: List[Tuple[float, float]]) -> Tuple[np.ndarray, float]:
